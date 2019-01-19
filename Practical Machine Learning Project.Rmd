@@ -1,0 +1,85 @@
+---
+title: "Practical Machine Learning Project"
+author: "D. Buck"
+date: "January 18, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+##Background
+Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement - a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it. In this project, your goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. More information is available from the website here: http://web.archive.org/web/20161224072740/http:/groupware.les.inf.puc-rio.br/har (see the section on the Weight Lifting Exercise Dataset).
+
+## Project Overview
+One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it. In this project, the goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. The goal of this project is to predict the manner in which they did the exercise. This is the "classe" variable in the training set. Any of the other variables may be used to make predictions. 
+
+## Reproducibility
+
+```{r warning=FALSE, cache=TRUE}
+## Get data
+trainingurl <- read.csv("https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv", na.strings = c("NA","#DIV/0!", ""))
+testingurl <- read.csv("https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv",  na.strings = c("NA","#DIV/0!", ""))
+set.seed(123)
+```
+## Exploratory Analysis
+```{r eval=FALSE, message=FALSE, warning=FALSE}
+#head(trainingurl); summary(trainingurl); plot(training$classe) **See Appendix** 
+```
+## Preprocessing
+```{r warning=FALSE, cache=TRUE}
+train <- trainingurl[ , colSums(is.na(trainingurl))== 0] ; test <- testingurl[ , colSums(is.na(testingurl))== 0] #remove all columns without data
+train <- train[,-c(1:7)]; test <- test[,-c(1:7)] #remove non-essential data
+```
+## Partition Training Set
+```{r message=FALSE, warning=FALSE, cache=TRUE}
+library(caret)
+inTrain <- createDataPartition(y=train$classe, p=0.7, list=FALSE)
+training <- train[inTrain, ]; testing <- train[-inTrain, ]
+dim(training); dim(testing)
+```
+## The Model with Cross-validation
+```{r message=FALSE, warning=FALSE, cache=TRUE}
+library("randomForest")
+control <- trainControl(method = "cv", 5)
+rf <- train(classe ~ ., data=training, method='rf', trControl=control)
+rf
+```
+## Prediction 
+```{r cache=TRUE}
+prediction <- predict(rf, testing)
+confusionMatrix(testing$classe, prediction)
+```
+## Expected Out of Sample Error 
+```{r cache=TRUE}
+getAccuracy <- postResample(prediction, testing$classe)
+a <- getAccuracy[1]
+e <- 1 - as.numeric(confusionMatrix(testing$classe, prediction)
+                       $overall[1])
+sprintf("The model accuracy is %f. The out of sample error rate is %f!", a, e)
+```
+## Test Cases. 
+```{r warning=FALSE}
+FinalPredictions <- predict(rf, test[, -length(names(test))])
+FinalPredictions
+```
+## Appendix
+
+###Appendix 1| Exploratory Data Analysis
+```{r message=TRUE, warning=TRUE, cache=TRUE}
+plot(training$classe)
+```
+
+### Appendix 2 | Random Forest Tree
+```{r message=FALSE, warning=FALSE, cache=TRUE}
+library(rpart); library(rattle)
+tree <- rpart(classe ~ ., data=training, method="class")
+### Appendix 2A | 
+tree
+### Appendix 2B |
+fancyRpartPlot(tree)
+```
+
+## Reference:
+The data for this project come from this source: http://web.archive.org/web/20161224072740/http:/groupware.les.inf.puc-rio.br/har.

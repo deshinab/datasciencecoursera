@@ -1,0 +1,12 @@
+name: MyHebrewName
+title: MyHebrewName
+username:
+account: dbuck
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 728138
+bundleId: 1886422
+url: https://dbuck.shinyapps.io/MyHebrewName/
+when: 1550652853.75167
+asMultiple: FALSE
+asStatic: FALSE
